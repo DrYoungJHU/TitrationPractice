@@ -21,7 +21,7 @@
 
 <div class="container">
     <h2 style="text-align: center;">Titration Practice Problem Generator</h2>
-    <p style="text-align: center;">Select a point on the curve and calculate the pH. The red point is at equivalence, orange is the half-equivalence point.</p>
+    <p style="text-align: center;">Select a point on the curve and calculate the pH.</p>
     
     <div class="controls">
         <button onclick="setupNewProblem()">Generate New Random Titration</button>
@@ -30,7 +30,7 @@
     <div class="stats-box" id="params-display"></div>
     
     <canvas id="titrationChart"></canvas>
-    <div class="legend-hint">Note: <span style="color:orange">●</span> = Half-Equivalence | <span style="color:red">●</span> = Equivalence Point</div>
+    <div class="legend-hint">Note: <span style="color:purple">●</span> = Initial pH | <span style="color:orange">●</span> = Half-Equivalence | <span style="color:red">●</span> = Equivalence Point</div>
 
     <div id="quiz-area">
         <div id="question-prompt" style="font-size: 1.2rem;">Click a point on the line to begin!</div>
@@ -109,6 +109,8 @@ function generateChart() {
     const curvePoints = []; // 200 points for the line
     const quizPoints = [];  // 10 points for the interaction
     
+    const noise = () => (Math.random()-0.5)*0.2; // random noise plus-minus 0.1
+    
     const maxV = V_eq * 1.6;
     
     // 1. Generate the smooth curve (200 points)
@@ -117,74 +119,73 @@ function generateChart() {
         curvePoints.push({ x: v.toFixed(2), y: calculatePH(v).toFixed(2) });
     }
 
-    // 2. Define the 10 Quiz Points (Volumes)
+    // 2. Define the 7 Quiz Points (Volumes)
     // We'll include the critical ones and some random spreads
     const quizVolumes = [
-        0, 
-        (V_half * 0.5).toFixed(2), 
-        V_half.toFixed(2), 
-        (V_half * 1.5).toFixed(2),
-        (V_eq * 0.9).toFixed(2),
-        V_eq.toFixed(2), 
-        (V_eq * 1.1).toFixed(2),
-        (V_eq * 1.3).toFixed(2),
-        (V_eq * 1.5).toFixed(2),
+        0, // the initial pH, exact
+        (V_eq * (0.25 + noise())).toFixed(2), // pick a value between 15% - 35% of V_eq
+        V_half.toFixed(2), // the half eq point, exact
+        (V_eq * (0.75 + noise())).toFixed(2), // pick a value between 65% - 85%  of V_eq
+        V_eq.toFixed(2), // the equivalence point, exact
+        (V_eq * (1.3 + noise())).toFixed(2), // pick a value between 120% - 140%  of V_eq
         maxV.toFixed(2)
     ];
 
     if (chart) chart.destroy();
 
-    const ctx = document.getElementById('titrationChart').getContext('2d');
+   const ctx = document.getElementById('titrationChart').getContext('2d');
     chart = new Chart(ctx, {
         type: 'line',
         data: {
             datasets: [
                 {
-                                      label: 'Interactable Points',
+                    label: 'Interactable Points',
                     data: quizVolumes.map(v => ({ x: v, y: calculatePH(parseFloat(v)).toFixed(2) })),
-                    showLine: false,     // Don't draw a line between these
-                    pointRadius: 6,      // Make these dots visible
+                    showLine: false,
+                    pointRadius: 6,
                     pointHoverRadius: 8,
                     pointBackgroundColor: quizVolumes.map(v => 
+                        parseFloat(v) === 0 ? 'purple' :
                         parseFloat(v) === parseFloat(V_eq.toFixed(2)) ? 'red' : 
-                        parseFloat(v) === parseFloat(V_half.toFixed(2)) ? 'orange' : '#28a745'
+                        parseFloat(v) === parseFloat(V_half.toFixed(2)) ? 'orange' : 'green'
                     ),
-                    hitRadius: 15        // These ARE clickable
+                    hitRadius: 15
                 },
                 {
-                  label: 'Titration Curve',
+                    label: 'Titration Curve',
                     data: curvePoints,
                     borderColor: '#007bff',
                     borderWidth: 2,
-                    pointRadius: 0,      // Hide the 200 curve dots
-                    hitRadius: 0,       // Make the curve unclickable
+                    pointRadius: 0,
+                    hitRadius: 0,
                     fill: false,
                     tension: 0.2
                 }
             ]
         },
         options: {
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            },
             scales: {
                 x: { type: 'linear', title: { display: true, text: 'Volume Added (mL)' } },
                 y: { display: false }
             },
-            plugins: { tooltip: { enabled: false }, 
-                     legend: {display: false // This removes the clickable legend boxes at the top
-        },
-                     },
             onClick: (e) => {
-                // Look for clicks ONLY on the second dataset (index 1)
                 const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-                const quizDatasetPoints = points.filter(p => p.datasetIndex === 1);
+                // LOOKING AT DATASET 0 NOW
+                const quizDatasetPoints = points.filter(p => p.datasetIndex === 0);
 
                 if (quizDatasetPoints.length) {
                     const index = quizDatasetPoints[0].index;
-                    const pointData = chart.data.datasets[1].data[index];
+                    const pointData = chart.data.datasets[0].data[index];
                     selectedPoint = { x: pointData.x, y: parseFloat(pointData.y) };
                     
                     document.getElementById('question-prompt').innerHTML = 
                         `<strong>Challenge:</strong> Calculate pH at <b>${selectedPoint.x} mL</b> added:`;
                     document.getElementById('input-wrap').style.display = 'block';
+                    document.getElementById('feedback').innerText = ''; // Clear old feedback
                 }
             }
         }
@@ -195,7 +196,7 @@ function checkAnswer() {
     const userVal = parseFloat(document.getElementById('user-pH').value);
     const feedback = document.getElementById('feedback');
     const diff = Math.abs(userVal - selectedPoint.y);
-    const percentError = selectedPoint.y*0.05;
+    const percentError = selectedPoint.y*0.02; // allow for a 2% error 
     
     if (diff < percentError) {
         feedback.style.color = "#28a745";
