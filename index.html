@@ -3,22 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Titration Challenge</title>
+    <title>Titration Practice</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
 <div class="container">
-    <h2>Titration Practice Generator</h2>
-    <p>Select a point on the curve and calculate the pH using the data provided.</p>
+    <h2>Titration Practice Problem Generator</h2>
+    <p>Select a point on the curve and calculate the pH using the data provided in the grey box below.</p>
     
     <div class="controls">
-        <label class="toggle-container">
+<div class="switch-container">
+        <span class="mode-label">Weak Acid</span>
+        <label class="switch">
             <input type="checkbox" id="titrationMode" onchange="setupNewProblem()">
-            <span class="toggle-label">Weak Base Mode</span>
+            <span class="slider round"></span>
         </label>
-        <button onclick="setupNewProblem()">Generate New Random Titration</button>
+        <span class="mode-label">Weak Base</span>
+    </div>
+        <button onclick="setupNewProblem()">Generate New Titration Curve</button>
     </div>
 
     <div class="stats-box" id="params-display"></div>
