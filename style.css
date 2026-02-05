@@ -7,16 +7,20 @@ body { font-family: system-ui, -apple-system, sans-serif; padding: 10px; backgro
     padding: 20px; 
     border-radius: 15px; 
     box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.controls { 
-    margin-bottom: 20px; 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 15px; 
-    align-items: center; 
-    justify-content: center; 
+.controls {
+    display: flex;
+    flex-direction: column; /* Stack the toggle and button vertically on mobile */
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
 }
+
+
 
 /* Container for the switch and labels */
 .switch-container {
@@ -91,17 +95,56 @@ input:checked + .slider:before {
 }
 
 @media (max-width: 600px) {
-    .chart-wrapper { height: 300px; }
-    button { width: 100%; }
+    /* 1. Adjust the chart for smaller screens */
+    .chart-wrapper { 
+        height: 300px; 
+    }
+
+    /* 2. Stack the toggle and the 'Generate' button vertically */
+    .controls {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    /* 3. Make buttons easier to tap on mobile */
+    button { 
+        width: 100%; 
+        padding: 15px; /* Slightly larger tap target */
+    }
+
+    /* 4. Allow the input and submit button to stack if they run out of room */
+    #input-wrap {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    #user-pH {
+        width: 100%; /* Make input full width on tiny screens */
+        max-width: 200px;
+    }
 }
 
 .stats-box { 
+    width: 100%; /* Allows it to fill the container width */
+    max-width: 600px; /* But keeps it from getting too wide on desktop */
+    text-align: center; /* Centers the text inside the box */
     background: #e9ecef; 
     padding: 15px; 
     border-radius: 8px; 
     margin-bottom: 20px; 
     font-family: monospace; 
-    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#quiz-area {
+    width: 100%;
+    margin-top: 20px;
+    padding: 20px;
+    border-top: 2px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers the Prompt, Input, and Feedback */
+    text-align: center;
 }
 
 button { 
@@ -129,6 +172,7 @@ input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px; 
     justify-content: center;
     align-items: center;
     gap: 10px; /* Adds consistent space between input and button */
+    margin-top: 15px;
     flex-wrap: nowrap; /* Prevents them from stacking on small screens unless forced */
 }
 
