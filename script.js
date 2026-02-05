@@ -25,6 +25,18 @@ function setupNewProblem() {
 }
 
 function updateDisplay() {
+    isWeakBaseMode = document.getElementById('titrationMode').checked;
+    
+    // Optional: Visual styling for labels
+    const labels = document.querySelectorAll('.mode-label');
+    if (isWeakBaseMode) {
+        labels[0].style.opacity = "0.5";
+        labels[1].style.opacity = "1";
+    } else {
+        labels[0].style.opacity = "1";
+        labels[1].style.opacity = "0.5";
+    }
+    
     const display = document.getElementById('params-display');
     const typeA = isWeakBaseMode ? "Weak Base" : "Weak Acid";
     const typeB = isWeakBaseMode ? "HCl (Strong Acid)" : "NaOH (Strong Base)";
