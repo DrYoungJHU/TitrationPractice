@@ -103,24 +103,35 @@ function generateChart() {
                     label: 'Interactable Points',
                     data: quizVolumes.map(v => ({ x: v, y: calculatePH(parseFloat(v)).toFixed(2) })),
                     showLine: false,
-                    pointRadius: quizVolumes.map((v, i) => i === selectedIndex ? 8 : 6),
-                    pointBorderColor: quizVolumes.map((v, i) => i === selectedIndex ? 'black' : 'rgba(0,0,0,0.1)'),
-                    pointBorderWidth: quizVolumes.map((v, i) => i === selectedIndex ? 4 : 1),
-                    pointBackgroundColor: quizVolumes.map(v => 
-                        parseFloat(v) === 0 ? 'purple' :
-                        parseFloat(v) === parseFloat(V_eq.toFixed(2)) ? 'red' : 
-                        parseFloat(v) === parseFloat(V_half.toFixed(2)) ? 'orange' : 'green'
-                    ),
+// 1. Size Logic: Selected point is 12, others are 7
+    pointRadius: quizVolumes.map((_, i) => i === selectedIndex ? 10 : 7),
+    pointHoverRadius: 12,
+
+    // 2. Remove the Border: Set widths to 0
+    pointBorderWidth: 0,
+    pointHoverBorderWidth: 0,
+
+    // 3. Transparency Logic: Selected point is solid, others are slightly faded
+    pointBackgroundColor: quizVolumes.map((v, i) => {
+        const baseColor = parseFloat(v) === 0 ? 'rgba(111, 66, 193, ' : // Purple
+                          parseFloat(v) === parseFloat(V_eq.toFixed(2)) ? 'rgba(220, 53, 69, ' : // Red
+                          parseFloat(v) === parseFloat(V_half.toFixed(2)) ? 'rgba(255, 153, 0, ' : // Orange
+                          'rgba(40, 167, 69, '; // Green
+        
+        // If it's the selected one, use 1.0 opacity, otherwise 0.6
+        return baseColor + (i === selectedIndex ? '1.0)' : '0.8)');
+    }),
                     hitRadius: 15
                 },
                 {
                     label: 'Titration Curve',
                     data: curvePoints,
-                    borderColor: '#007bff',
+                    borderColor: isWeakBaseMode ? '#000080' : '#8B0000',
                     borderWidth: 2,
                     pointRadius: 0,
                     fill: false,
-                    tension: 0.2
+                    tension: 0.2,
+                    hitRadius: 0
                 }
             ]
         },
@@ -132,25 +143,44 @@ function generateChart() {
                 x: { type: 'linear', title: { display: true, text: 'Volume Added (mL)' } },
                 y: { display: false }
             },
-            onClick: (e) => {
-                const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-                const quizDatasetPoints = points.filter(p => p.datasetIndex === 0);
+            
+onClick: (e) => {
+    const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+    const quizDatasetPoints = points.filter(p => p.datasetIndex === 0);
 
-                if (quizDatasetPoints.length) {
-                    selectedIndex = quizDatasetPoints[0].index;
-                    const pointData = chart.data.datasets[0].data[selectedIndex];
-                    selectedPoint = { x: pointData.x, y: parseFloat(pointData.y) };
-                    
-                    document.getElementById('question-prompt').innerHTML = 
-                        `<strong>Challenge:</strong> Calculate pH at <b>${selectedPoint.x} mL</b> added:`;
-                    document.getElementById('input-wrap').style.display = 'block';
-                    document.getElementById('feedback').innerText = '';
+    if (quizDatasetPoints.length) {
+        selectedIndex = quizDatasetPoints[0].index;
+        const ds = chart.data.datasets[0];
 
-                    chart.data.datasets[0].pointBorderWidth = quizVolumes.map((_, i) => i === selectedIndex ? 5 : 1);
-                    chart.data.datasets[0].pointBorderColor = quizVolumes.map((_, i) => i === selectedIndex ? 'black' : 'rgba(0,0,0,0.1)');
-                    chart.update();
-                }
-            }
+        // 1. Update the data reference for the quiz
+        const pointData = ds.data[selectedIndex];
+        selectedPoint = { x: pointData.x, y: parseFloat(pointData.y) };
+        
+        // 2. RE-MAP THE RADIUS (Force the size change)
+        ds.pointRadius = ds.data.map((_, i) => i === selectedIndex ? 10 : 7);
+
+        // 3. RE-MAP THE COLORS (Force the opacity change)
+        ds.pointBackgroundColor = ds.data.map((v, i) => {
+            const vol = parseFloat(v.x);
+            let base;
+            if (vol === 0) base = 'rgba(111, 66, 193, '; // Purple
+            else if (Math.abs(vol - parseFloat(V_eq.toFixed(2))) < 0.01) base = 'rgba(220, 53, 69, '; // Red
+            else if (Math.abs(vol - parseFloat(V_half.toFixed(2))) < 0.01) base = 'rgba(255, 153, 0, '; // Orange
+            else base = 'rgba(40, 167, 69, '; // Green
+            
+            return base + (i === selectedIndex ? '1.0)' : '0.9)');
+        });
+
+        // 4. Update UI
+        document.getElementById('question-prompt').innerHTML = 
+            `<strong>Challenge:</strong> Calculate pH at <b>${selectedPoint.x} mL</b> added:`;
+        document.getElementById('input-wrap').style.display = 'flex';
+        document.getElementById('feedback').innerText = '';
+
+        // 5. Render changes
+        chart.update();
+    }
+}
         }
     });
 }
