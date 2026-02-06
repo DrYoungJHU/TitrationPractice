@@ -185,5 +185,3 @@ input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px; 
 /* Ensure feedback text doesn't push the boxes around */
 #feedback { min-height: 1.5rem; font-weight: bold; margin-top: 20px; font-size: 1rem; }
 .legend-hint { font-size: 0.8rem; color: #666; text-align: center; }
-
-
