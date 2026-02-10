@@ -159,10 +159,10 @@ function generateChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { enabled: true } },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: {
                 x: { type: 'linear', title: { display: true, text: 'Volume Added (mL)' } },
-                y: { display: true }
+                y: { display: false }
             },
             
 onClick: (e) => {
