@@ -49,26 +49,47 @@ function updateDisplay() {
 }
 
 function calculatePH(Vb) {
+    // 1. Setup constants
     const molesA = (Va * Ca) / 1000;
-    const molesB = (Vb * Cb) / 1000;
-    const totalV = (Va + Vb) / 1000;
+    const Kw = 1e-14;
+    const Veq = (Ca * Va) / Cb;
+    
+    // 2. IMPORTANT: Round Vb and Veq to the same precision (2 decimal places)
+    // This ensures the "Handshake" works when you click the dot.
+    const vCheck = parseFloat(parseFloat(Vb).toFixed(2));
+    const vEqCheck = parseFloat(Veq.toFixed(2));
+
+    const molesB = (vCheck * Cb) / 1000;
+    const totalV = (Va + vCheck) / 1000;
     let pH;
 
-    if (Vb < 0.0001) {
+    // --- CHEMISTRY LOGIC ---
+    
+    // Initial Point
+    if (vCheck < 0.01) {
         pH = -Math.log10(Math.sqrt(Ka * Ca));
-    } else if (Math.abs(molesB - molesA) < 1e-10) {
-        const Kb = 1e-14 / Ka;
+    } 
+    // Equivalence Point (The Handshake)
+    else if (Math.abs(vCheck - vEqCheck) < 0.01) {
+        const Kb = Kw / Ka;
         const concSalt = molesA / totalV;
-        pH = 14 - (-Math.log10(Math.sqrt(Kb * concSalt)));
-    } else if (molesB < molesA) {
+        const OH = Math.sqrt(Kb * concSalt);
+        pH = 14 + Math.log10(OH);
+    } 
+    // Buffer Region
+    else if (vCheck < vEqCheck) {
         const pKa = -Math.log10(Ka);
+        // Henderson-Hasselbalch
         pH = pKa + Math.log10(molesB / (molesA - molesB));
-    } else {
-        const excessBase = molesB - molesA;
-        const concOH = excessBase / totalV;
-        pH = 14 + Math.log10(concOH);
+    } 
+    // Excess Titrant
+    else {
+        const excessMols = molesB - molesA;
+        const concExcess = excessMols / totalV;
+        pH = 14 + Math.log10(concExcess);
     }
 
+    // Weak Base Mode Flip
     return isWeakBaseMode ? (14 - pH) : pH;
 }
 
@@ -138,10 +159,10 @@ function generateChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            plugins: { legend: { display: false }, tooltip: { enabled: true } },
             scales: {
                 x: { type: 'linear', title: { display: true, text: 'Volume Added (mL)' } },
-                y: { display: false }
+                y: { display: true }
             },
             
 onClick: (e) => {
@@ -188,28 +209,46 @@ onClick: (e) => {
 function checkAnswer() {
     const userVal = parseFloat(document.getElementById('user-pH').value);
     const feedback = document.getElementById('feedback');
-    const diff = Math.abs(userVal - selectedPoint.y);
-    const percentError = selectedPoint.y * 0.02; 
     
-    if (diff < percentError) {
-        feedback.style.color = "#28a745";
-        feedback.innerText = `Correct! pH = ${selectedPoint.y}`;
+    if (isNaN(userVal)) {
+        feedback.innerText = "Please enter a numeric pH value.";
         return;
     }
-  
-    const x = selectedPoint.x;
-    const vEqFixed = parseFloat(V_eq.toFixed(2));
-    feedback.style.color = "#dc3545";
-  
-    if (x <= 0.01) {
-        feedback.innerText = `Try again! The initial pH is dictated by the weak ${isWeakBaseMode ? 'base' : 'acid'} equilibrium.`;
-    } else if (x < vEqFixed) {
-        feedback.innerText = `Try again! This point is in the buffer region; try the Henderson-Hasselbalch equation.`;
-    } else if (Math.abs(x - vEqFixed) < 0.01) { 
-        feedback.innerText = `Try again! At equivalence, only the conjugate is present. Use salt hydrolysis!`;
+
+    // Calculate the 'official' answer for the specific volume clicked
+    const correctPH = parseFloat(calculatePH(selectedPoint.x).toFixed(2));
+    
+    const diff = Math.abs(userVal - correctPH);
+    const tolerance = 0.05; // Industry standard for pH calculation errors
+    
+    if (diff <= tolerance) {
+        feedback.style.color = "#28a745";
+        feedback.innerText = `Correct! The pH is ${correctPH}.`;
     } else {
-        feedback.innerText = `Try again! At this stage, you have excess strong titrant.`;
+        feedback.style.color = "#dc3545";
+        // Call the hint logic
+        provideHint(correctPH);
     }
+}
+
+function provideHint(correctPH) {
+    const feedback = document.getElementById('feedback');
+    const x = parseFloat(selectedPoint.x);
+    const vEq = parseFloat(((Ca * Va) / Cb).toFixed(2));
+
+    let hint = `Try again! (Target: ${correctPH}) `;
+    
+    if (x < 0.01) {
+        hint += "Use the initial weak acid concentration and Ka.";
+    } else if (Math.abs(x - vEq) < 0.01) {
+        hint += "At equivalence, use salt hydrolysis: Kb = Kw/Ka.";
+    } else if (x < vEq) {
+        hint += "In the buffer region, use the Henderson-Hasselbalch equation.";
+    } else {
+        hint += "You have excess strong titrant; calculate [OH-] from the extra moles.";
+    }
+    
+    feedback.innerText = hint;
 }
 
 window.onload = setupNewProblem;
