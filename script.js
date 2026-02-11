@@ -239,13 +239,13 @@ function provideHint(correctPH) {
     let hint = `Try again! `;
     
     if (x < 0.01) {
-        hint += "Use the initial weak acid concentration and Ka.";
+        hint += "Use the initial weak acid concentration and the equilibrium constant.";
     } else if (Math.abs(x - vEq) < 0.01) {
-        hint += "At equivalence, use salt hydrolysis: Kb = Kw/Ka.";
+        hint += "At the equivalence point, only the conjugate is present.";
     } else if (x < vEq) {
         hint += "In the buffer region, use the Henderson-Hasselbalch equation.";
     } else {
-        hint += "You have excess strong titrant; calculate [OH-] from the extra moles.";
+        hint += "You have excess strong titrant; calculate pH from the excess moles.";
     }
     
     feedback.innerText = hint;
