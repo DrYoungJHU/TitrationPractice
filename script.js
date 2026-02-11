@@ -236,7 +236,7 @@ function provideHint(correctPH) {
     const x = parseFloat(selectedPoint.x);
     const vEq = parseFloat(((Ca * Va) / Cb).toFixed(2));
 
-    let hint = `Try again! (Target: ${correctPH}) `;
+    let hint = `Try again! `;
     
     if (x < 0.01) {
         hint += "Use the initial weak acid concentration and Ka.";
