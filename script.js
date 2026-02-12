@@ -194,7 +194,7 @@ onClick: (e) => {
 
         // 4. Update UI
         document.getElementById('question-prompt').innerHTML = 
-            `<strong>Challenge:</strong> Calculate pH at <b>${selectedPoint.x} mL</b> added:`;
+            `<strong>Question:</strong> Calculate pH at <b>${selectedPoint.x} mL</b> added:`;
         document.getElementById('input-wrap').style.display = 'flex';
         document.getElementById('feedback').innerText = '';
 
